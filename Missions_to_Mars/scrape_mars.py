@@ -38,14 +38,14 @@ def scrape():
     browser.visit(url3)
     html = browser.html
     soup = BeautifulSoup(html, 'html.parser')
-    mars_weather = soup.find_all('p', class_='TweetTextSize TweetTextSize--normal js-tweet-text tweet-text')[0].text
+    mars_tweet = soup.find_all('p', class_='TweetTextSize TweetTextSize--normal js-tweet-text tweet-text')[0].text
 
     # FACTS
-    facts_url = 'https://space-facts.com/mars/'
-    tables = pd.read_html(facts_url)
-    mars_facts_df = tables[2]
-    mars_facts_df.columns = ["Description", "Value"]
-    mars_html_table = mars_facts_df.to_html()
+    url4 = 'https://space-facts.com/mars/'
+    tables = pd.read_html(url4)
+    mars_facts = tables[2]
+    mars_facts.columns = ["Description", "Value"]
+    mars_html_table = mars_facts.to_html()
     mars_html_table.replace('\n', '')
     
     # Mars hemisphere name and image to be scraped
@@ -81,8 +81,8 @@ def scrape():
         "news_title": news_title,
         "news_teaser": news_teaser,
         "featured_img_url": featured_img_url,
-        "mars_weather": mars_weather,
-        "fact_table": str(mars_html_table),
+        "mars_tweet": mars_tweet,
+        "mars_html_table": str(mars_html_table),
         "hemisphere_images": hemisphere_image_urls
     }
 
