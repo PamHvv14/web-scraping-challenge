@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import requests
 import time
+import re
 import pymongo
 
 def init_browser():
@@ -36,9 +37,16 @@ def scrape():
     # TWEET
     url3 = 'https://twitter.com/marswxreport?lang=en'
     browser.visit(url3)
+    time.sleep(3)
     html = browser.html
     soup = BeautifulSoup(html, 'html.parser')
-    mars_tweet = soup.find_all('p', class_='TweetTextSize TweetTextSize--normal js-tweet-text tweet-text')[0].text
+    mars_weather_tweet = soup.find("div", attrs={"class": "tweet", "data-name": "Mars Weather"})
+    try:
+        mars_weather = mars_weather_tweet.find("p", "tweet-text").get_text()
+    except AttributeError:
+        pattern = re.compile(r'sol')
+        mars_weather = soup.find('span', text=pattern).text
+    
 
     # FACTS
     url4 = 'https://space-facts.com/mars/'
@@ -48,42 +56,38 @@ def scrape():
     mars_html_table = mars_facts.to_html()
     mars_html_table.replace('\n', '')
     
-    # Mars hemisphere name and image to be scraped
-    usgs_url = 'https://astrogeology.usgs.gov'
-    hemispheres_url = 'https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
-    browser.visit(hemispheres_url)
-    hemispheres_html = browser.html
-    hemispheres_soup = BeautifulSoup(hemispheres_html, 'html.parser')
-    # Mars hemispheres products data
-    all_mars_hemispheres = hemispheres_soup.find('div', class_='collapsible results')
-    mars_hemispheres = all_mars_hemispheres.find_all('div', class_='item')
-    hemisphere_image_urls = []
-    # Iterate through each hemisphere data
-    for i in mars_hemispheres:
-        # Collect Title
-        hemisphere = i.find('div', class_="description")
-        title = hemisphere.h3.text        
-        # Collect image link by browsing to hemisphere page
-        hemisphere_link = hemisphere.a["href"]    
-        browser.visit(usgs_url + hemisphere_link)        
-        image_html = browser.html
-        image_soup = BeautifulSoup(image_html, 'html.parser')        
-        image_link = image_soup.find('div', class_='downloads')
-        image_url = image_link.find('li').a['href']
-        # Create Dictionary to store title and url info
-        image_dict = {}
-        image_dict['title'] = title
-        image_dict['img_url'] = image_url        
-        hemisphere_image_urls.append(image_dict)
+    #HEMISPHERES
+    url5 ='https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
+    browser.visit(url5)
+    html = browser.html
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    hemisphere_images = []
+    products = soup.find('div', class_='collapsible results')
+    hemispheres = products.find_all('div', class_='item')
+
+    for hemisphere in hemispheres:
+        title = hemisphere.find("h3").text
+        title = title.replace("Enhanced", "")
+        end_link = hemisphere.find("a")["href"]
+        url6 = "https://astrogeology.usgs.gov/" + end_link    
+        browser.visit(url6)
+        html = browser.html
+        soup = BeautifulSoup(html, "html.parser")
+        downloads = soup.find("div", class_="downloads")
+        image_url = downloads.find("a")["href"]
+        hemisphere_images.append({"title": title, "img_url": image_url})
+
+
 
     # Mars 
     mars_dict = {
         "news_title": news_title,
         "news_teaser": news_teaser,
         "featured_img_url": featured_img_url,
-        "mars_tweet": mars_tweet,
+        "mars_weather": mars_weather,
         "mars_html_table": str(mars_html_table),
-        "hemisphere_images": hemisphere_image_urls
+        "hemisphere_images": hemisphere_images
     }
 
-    return mars_dict
+    return mars_dict 
