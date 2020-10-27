@@ -19,8 +19,9 @@ def scrape():
     browser.visit(url)
     html = browser.html
     soup = BeautifulSoup(html, 'html.parser')
-    news_title = soup.find('div', class_= 'content_title').text
-    news_teaser = soup.find('div', class_='article_teaser_body').text
+    slide_elem = soup.select_one('ul.item_list li.slide')
+    news_title= slide_elem.find('div', class_= 'content_title').text
+    news_teaser =slide_elem.find('div', class_='article_teaser_body').text
 
     #IMAGE
     url2 = 'https://www.jpl.nasa.gov/spaceimages/?search=&category=Mars'
